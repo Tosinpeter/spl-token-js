@@ -1,38 +1,43 @@
 import logo from './logo.svg';
+import React, { useMemo, useEffect, useState } from "react";
 import './App.css';
 import {AccountLayout, TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import {clusterApiUrl, Connection, PublicKey} from "@solana/web3.js";
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import { WalletMultiButton,WalletDisconnectButton } from '@solana/wallet-adapter-react-ui';
+import { SubmitButton } from './Buttons';
+
+
+require('@solana/wallet-adapter-react-ui/styles.css');
 
 function App() {
 
-  async function checkBalance() {
-    const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
-
-  const tokenAccounts = await connection.getTokenAccountsByOwner(
-    new PublicKey('2Xth4mcDfCiJpQphkKUY5ASz8HZgEnrH5XtfZQzi9zdr'),
-    {
-      programId: TOKEN_PROGRAM_ID,
-    }
-  );
-
-  console.log("Token                                         Balance");
-  console.log("------------------------------------------------------------");
-  tokenAccounts.value.forEach((tokenAccount) => {
-    const accountData = AccountLayout.decode(tokenAccount.account.data);
-    console.log(`${new PublicKey(accountData.mint)}   ${accountData.amount}`);
-  })
-  }
+  const solNetwork = WalletAdapterNetwork.Mainnet;
+  const endpoint = useMemo(() => clusterApiUrl(solNetwork), [solNetwork]);
+  // initialise all the wallets you want to use
+  const wallets = useMemo(() => [ new PhantomWalletAdapter()]);
 
   return (
-    <div className="App">
+    <ConnectionProvider endpoint={endpoint}>
+            <WalletProvider wallets={wallets}>
+                <WalletModalProvider>
+                <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
-          Edit <code>src/App.js</code> and save to reload.
+           <code>src/App.js</code> and save to reload.
         </p>
-        <button onClick={checkBalance}>checkBalance</button>
+        <WalletMultiButton />
+        <SubmitButton/>
+        
       </header>
     </div>
+                </WalletModalProvider>
+            </WalletProvider>
+        </ConnectionProvider>
   );
 }
 
